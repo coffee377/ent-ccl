@@ -1,2 +1,2 @@
-# ent-ccl
+# entcc
 Extensions for Ent

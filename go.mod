@@ -1,4 +1,4 @@
-module entcc
+module github.com/coffee377/entcc
 
 go 1.24.6
 
