@@ -5,8 +5,8 @@ import "entgo.io/ent/schema"
 const FieldSortAnnotation = "CCSort"
 
 type fieldSort struct {
-	Number   int
 	Disabled bool
+	Number   int
 	tail     bool
 	desc     bool // 是否降序排序
 }
@@ -16,6 +16,11 @@ func (s fieldSort) Name() string {
 }
 
 type FieldSortOption func(*fieldSort)
+
+// FieldSort 实体级别控制
+func FieldSort(enable bool) schema.Annotation {
+	return fieldSort{Disabled: !enable}
+}
 
 func Sort(num int, options ...FieldSortOption) schema.Annotation {
 	f := fieldSort{Number: num}
@@ -47,8 +52,8 @@ func Desc(desc bool) FieldSortOption {
 	}
 }
 
-func Disabled() FieldSortOption {
+func Disabled(disabled bool) FieldSortOption {
 	return func(f *fieldSort) {
-		f.Disabled = true
+		f.Disabled = disabled
 	}
 }
