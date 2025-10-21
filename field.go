@@ -3,11 +3,7 @@ package entcc
 import "entgo.io/ent/schema"
 
 const (
-	SortAnnotation   = "CCSort"
-	SortDisabledName = "Disabled"
-	SortNumberName   = "Number"
-	SortTailName     = "Tail"
-	SortDescName     = "Desc"
+	SortAnnotation = "CCSort"
 )
 
 type FieldSort struct {
@@ -18,7 +14,7 @@ type FieldSort struct {
 }
 
 func (s FieldSort) Merge(other schema.Annotation) schema.Annotation {
-	var ant schema.Annotation
+	var ant FieldSort
 	switch other := other.(type) {
 	case FieldSort:
 		ant = other
@@ -29,10 +25,23 @@ func (s FieldSort) Merge(other schema.Annotation) schema.Annotation {
 	default:
 		return s
 	}
-	s.Disabled = ant.(FieldSort).Disabled
-	s.Number = ant.(FieldSort).Number
-	s.Tail = ant.(FieldSort).Tail
-	s.Desc = ant.(FieldSort).Desc
+
+	if ant.Disabled {
+		s.Disabled = true
+	}
+
+	if n := ant.Number; n != 0 {
+		s.Number = n
+	}
+
+	if ant.Tail {
+		s.Tail = true
+	}
+
+	if ant.Desc {
+		s.Desc = true
+	}
+
 	return s
 }
 
@@ -42,7 +51,8 @@ func (s FieldSort) Name() string {
 
 // WithFieldSort 实体级别控制,是否启用排序
 func WithFieldSort(enable bool) schema.Annotation {
-	return FieldSort{Disabled: !enable}
+	disabled := !enable
+	return FieldSort{Disabled: disabled}
 }
 
 // WithFieldDesc 实体级别控制,是否降序排序

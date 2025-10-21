@@ -17,7 +17,7 @@ func FiledSortHook(logger *zap.SugaredLogger) gen.Hook {
 				if !ok {
 					continue
 				}
-				logger.Debugf("正在为表 %s 按自动权重排序", node.Name)
+				logger.Debugf("正在为表 %s 按字段权重排序", node.Name)
 				a := make([]string, len(node.Fields))
 				for i, field := range node.Fields {
 					a[i] = field.Name
@@ -39,14 +39,7 @@ func FiledSortHook(logger *zap.SugaredLogger) gen.Hook {
 	}
 }
 
-type annotationInfo struct {
-	Disabled bool `json:"Disabled"` // 是否禁用排序
-	Number   int  `json:"Number"`   // 排序权重
-	Tail     bool `json:"Tail"`     // 是否放在最后
-	Desc     bool `json:"desc"`     // 是否降序
-}
-
-func fieldAnno(annotations gen.Annotations) (*annotationInfo, bool) {
+func fieldAnno(annotations gen.Annotations) (*FieldSort, bool) {
 	if anno, ok := annotations[SortAnnotation]; ok {
 		m, ok := anno.(map[string]any)
 		if !ok {
@@ -56,13 +49,13 @@ func fieldAnno(annotations gen.Annotations) (*annotationInfo, bool) {
 		if err != nil {
 			return nil, false
 		}
-		var o annotationInfo
-		err = json.Unmarshal(marshal, &o)
+		var fieldSort FieldSort
+		err = json.Unmarshal(marshal, &fieldSort)
 		if err != nil {
 			return nil, false
 		}
-		annotations[SortAnnotation] = &o
-		return &o, !o.Disabled
+		annotations[SortAnnotation] = &fieldSort
+		return &fieldSort, !fieldSort.Disabled
 	}
 	return nil, false
 }
@@ -87,24 +80,26 @@ func sortFields(fields []*gen.Field, desc bool) []*gen.Field {
 
 	}
 	sort.Slice(headFields, func(i, j int) bool {
+		ai := tailFields[i].Annotations[SortAnnotation].(*FieldSort)
+		aj := tailFields[j].Annotations[SortAnnotation].(*FieldSort)
 		if desc {
-			return headFields[i].Name > headFields[j].Name
+			return ai.Number > aj.Number
 		}
-		return headFields[i].Name < headFields[j].Name
+		return ai.Number < aj.Number
 	})
 	// 保持它们在 Schema 中定义的原始顺序
 	sort.Slice(midFields, func(i, j int) bool {
 		return midFields[i].Position.Index < midFields[j].Position.Index
 	})
 	sort.Slice(tailFields, func(i, j int) bool {
-		ai := tailFields[i].Annotations[SortAnnotation].(*annotationInfo)
-		aj := tailFields[j].Annotations[SortAnnotation].(*annotationInfo)
+		ai := tailFields[i].Annotations[SortAnnotation].(*FieldSort)
+		aj := tailFields[j].Annotations[SortAnnotation].(*FieldSort)
 		if desc {
 			return ai.Number > aj.Number
 		}
 		return ai.Number < aj.Number
 	})
-	result := append(headFields, midFields...)
-	result = append(result, tailFields...)
-	return result
+	res := append(headFields, midFields...)
+	res = append(res, tailFields...)
+	return res
 }
