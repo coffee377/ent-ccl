@@ -47,7 +47,7 @@ func NewExtension(opts ...ExtensionOption) (entc.Extension, error) {
 	return e, nil
 }
 
-func WithZap(logger *zap.Logger) ExtensionOption {
+func WithZapLogger(logger *zap.Logger) ExtensionOption {
 	return func(extension *ccExtension) {
 		extension.logger = logger
 	}

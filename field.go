@@ -10,56 +10,58 @@ const (
 	SortDescName     = "Desc"
 )
 
-type fieldSort struct {
-	Disabled bool
-	Number   int
-	Tail     bool
+type FieldSort struct {
+	Disabled bool // 是否禁用
+	Number   int  // 排序数字
+	Tail     bool // 是否尾排序
 	Desc     bool // 是否降序排序
 }
 
-func (s fieldSort) Name() string {
+func (s FieldSort) Merge(other schema.Annotation) schema.Annotation {
+	var ant schema.Annotation
+	switch other := other.(type) {
+	case FieldSort:
+		ant = other
+	case *FieldSort:
+		if other != nil {
+			ant = *other
+		}
+	default:
+		return s
+	}
+	s.Disabled = ant.(FieldSort).Disabled
+	s.Number = ant.(FieldSort).Number
+	s.Tail = ant.(FieldSort).Tail
+	s.Desc = ant.(FieldSort).Desc
+	return s
+}
+
+func (s FieldSort) Name() string {
 	return SortAnnotation
 }
 
-type FieldSortOption func(*fieldSort)
-
-// WithFieldSort 实体级别控制
+// WithFieldSort 实体级别控制,是否启用排序
 func WithFieldSort(enable bool) schema.Annotation {
-	return fieldSort{Disabled: !enable}
+	return FieldSort{Disabled: !enable}
 }
 
-func Sort(num int, options ...FieldSortOption) schema.Annotation {
-	f := fieldSort{Number: num}
-	for _, apply := range options {
-		apply(&f)
-	}
-	return f
+// WithFieldDesc 实体级别控制,是否降序排序
+func WithFieldDesc(desc bool) schema.Annotation {
+	return FieldSort{Desc: desc}
 }
 
-func SortTail(num int, options ...FieldSortOption) schema.Annotation {
-	return Sort(num, append(options, Tail())...)
+func Sort(num int) schema.Annotation {
+	return FieldSort{Number: num}
 }
 
-func Reversed() FieldSortOption {
-	return func(f *fieldSort) {
-		f.Number = -f.Number
-	}
+func Tail(tailed bool) schema.Annotation {
+	return FieldSort{Tail: tailed}
 }
 
-func Tail() FieldSortOption {
-	return func(f *fieldSort) {
-		f.Tail = true
-	}
+func TailSort(num int) schema.Annotation {
+	return FieldSort{Number: num, Tail: true}
 }
 
-func Desc(desc bool) FieldSortOption {
-	return func(f *fieldSort) {
-		f.Desc = desc
-	}
-}
-
-func Disabled(disabled bool) FieldSortOption {
-	return func(f *fieldSort) {
-		f.Disabled = disabled
-	}
+func Disabled(disabled bool) schema.Annotation {
+	return FieldSort{Disabled: disabled}
 }
