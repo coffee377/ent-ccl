@@ -2,23 +2,29 @@ package entcc
 
 import "entgo.io/ent/schema"
 
-const FieldSortAnnotation = "CCSort"
+const (
+	SortAnnotation   = "CCSort"
+	SortDisabledName = "Disabled"
+	SortNumberName   = "Number"
+	SortTailName     = "Tail"
+	SortDescName     = "Desc"
+)
 
 type fieldSort struct {
 	Disabled bool
 	Number   int
-	tail     bool
-	desc     bool // 是否降序排序
+	Tail     bool
+	Desc     bool // 是否降序排序
 }
 
 func (s fieldSort) Name() string {
-	return FieldSortAnnotation
+	return SortAnnotation
 }
 
 type FieldSortOption func(*fieldSort)
 
-// FieldSort 实体级别控制
-func FieldSort(enable bool) schema.Annotation {
+// WithFieldSort 实体级别控制
+func WithFieldSort(enable bool) schema.Annotation {
 	return fieldSort{Disabled: !enable}
 }
 
@@ -42,13 +48,13 @@ func Reversed() FieldSortOption {
 
 func Tail() FieldSortOption {
 	return func(f *fieldSort) {
-		f.tail = true
+		f.Tail = true
 	}
 }
 
 func Desc(desc bool) FieldSortOption {
 	return func(f *fieldSort) {
-		f.desc = desc
+		f.Desc = desc
 	}
 }
 
